@@ -21,20 +21,14 @@ namespace UdpChat
             userName = Console.ReadLine();
             int PORT = 9876;
             from = new IPEndPoint(0, 0);
-            udpClient = new UdpClient();
-            udpClient.ExclusiveAddressUse = false;
+            udpClient = new UdpClient {ExclusiveAddressUse = false};
             udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, PORT));
-            Task receive = ReceiverTask();
-            Task send = SendFunc();
+            Receiver().Start();
+            SendFunc().Start();
         }
 
-        static async Task ReceiverTask()
-        {
-            Task.Run(() => Receiver());
-        }
-
-        static void Receiver()
+        private static async Task Receiver()
         {
             while (isRunning)
             {
@@ -43,7 +37,7 @@ namespace UdpChat
             }
         }
 
-        static async Task SendFunc()
+        private static async Task SendFunc()
         {
             while (isRunning)
             {
@@ -51,13 +45,11 @@ namespace UdpChat
                 if (message == "exit")
                 {
                     isRunning = false;
-                    await ReceiverTask();
-                    await SendFunc();
-                    return;
+                    await Receiver();
                 }
                 message = $"{userName}: {message}";
                 var data = Encoding.UTF8.GetBytes(message);
-                udpClient.Send(data, data.Length, "255.255.255.255", 9876);
+                await udpClient.SendAsync(data, data.Length, "255.255.255.255", 9876);
             }
         }
     }
