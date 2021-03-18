@@ -14,7 +14,7 @@ namespace UdpChat
         private static bool isRunning = true;
         private static UdpClient udpClient;
         
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Console.WriteLine("What's your name? ");
             userName = Console.ReadLine();
@@ -22,8 +22,10 @@ namespace UdpChat
             udpClient = new UdpClient {ExclusiveAddressUse = false};
             udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, PORT));
-            Receiver().Start();
-            SendFunc().Start();
+            Task rec = Receiver();
+            Task send = SendFunc();
+            await rec;
+            await send;
         }
 
         private static async Task Receiver()
@@ -43,11 +45,15 @@ namespace UdpChat
                 if (message == "exit")
                 {
                     isRunning = false;
-                    await Receiver();
+                    
                 }
-                message = $"{userName}: {message}";
-                var data = Encoding.UTF8.GetBytes(message);
-                await udpClient.SendAsync(data, data.Length, "255.255.255.255", 9876);
+                else
+                {
+                    message = $"{userName}: {message}";
+                    var data = Encoding.UTF8.GetBytes(message);
+                    await udpClient.SendAsync(data, data.Length, "255.255.255.255", 9876);
+                }
+                
             }
         }
     }
