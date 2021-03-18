@@ -10,7 +10,6 @@ namespace UdpChat
     class Program
     {
         static string userName; // имя пользователя в чате
-        static IPEndPoint from;
 
         private static bool isRunning = true;
         private static UdpClient udpClient;
@@ -20,7 +19,6 @@ namespace UdpChat
             Console.WriteLine("What's your name? ");
             userName = Console.ReadLine();
             int PORT = 9876;
-            from = new IPEndPoint(0, 0);
             udpClient = new UdpClient {ExclusiveAddressUse = false};
             udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, PORT));
@@ -32,8 +30,8 @@ namespace UdpChat
         {
             while (isRunning)
             {
-                var recvBuffer = udpClient.Receive(ref from);
-                Console.WriteLine(Encoding.UTF8.GetString(recvBuffer));
+                var recvBuffer = await udpClient.ReceiveAsync();
+                Console.WriteLine(Encoding.UTF8.GetString(recvBuffer.Buffer));
             }
         }
 
